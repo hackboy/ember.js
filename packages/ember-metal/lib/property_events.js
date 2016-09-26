@@ -57,7 +57,7 @@ function propertyWillChange(obj, keyName) {
   if (watching) {
     dependentKeysWillChange(obj, keyName, m);
     chainsWillChange(obj, keyName, m);
-    notifyBeforeObservers(obj, keyName);
+    notifyBeforeObservers(obj, keyName, m);
   }
 }
 
@@ -99,7 +99,7 @@ function propertyDidChange(obj, keyName) {
     }
 
     chainsDidChange(obj, keyName, m, false);
-    notifyObservers(obj, keyName);
+    notifyObservers(obj, keyName, m);
   }
 
 
@@ -107,7 +107,8 @@ function propertyDidChange(obj, keyName) {
     obj[PROPERTY_DID_CHANGE](keyName);
   }
 
-  if (obj.isDestroying) { return; }
+  if (m && m.isSourceDestroying()) { return; }
+
   markObjectAsDirty(m);
 
   if (isEnabled('ember-glimmer-detect-backtracking-rerender') ||
@@ -120,7 +121,7 @@ function propertyDidChange(obj, keyName) {
 let WILL_SEEN, DID_SEEN;
 // called whenever a property is about to change to clear the cache of any dependent keys (and notify those properties of changes, etc...)
 function dependentKeysWillChange(obj, depKey, meta) {
-  if (obj.isDestroying) { return; }
+  if (meta && meta.isSourceDestroying()) { return; }
 
   if (meta && meta.hasDeps(depKey)) {
     let seen = WILL_SEEN;
@@ -140,7 +141,7 @@ function dependentKeysWillChange(obj, depKey, meta) {
 
 // called whenever a property has just changed to update dependent keys
 function dependentKeysDidChange(obj, depKey, meta) {
-  if (obj.isDestroying) { return; }
+  if (meta && meta.isSourceDestroying()) { return; }
 
   if (meta && meta.hasDeps(depKey)) {
     let seen = DID_SEEN;
@@ -254,8 +255,8 @@ function changeProperties(callback, binding) {
   }
 }
 
-function notifyBeforeObservers(obj, keyName) {
-  if (obj.isDestroying) { return; }
+function notifyBeforeObservers(obj, keyName, m) {
+  if (m && m.isSourceDestroying()) { return; }
 
   let eventName = keyName + ':before';
   let listeners, added;
@@ -268,8 +269,8 @@ function notifyBeforeObservers(obj, keyName) {
   }
 }
 
-function notifyObservers(obj, keyName) {
-  if (obj.isDestroying) { return; }
+function notifyObservers(obj, keyName, m) {
+  if (m && m.isSourceDestroying()) { return; }
 
   let eventName = keyName + ':change';
   let listeners;

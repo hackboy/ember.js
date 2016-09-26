@@ -87,6 +87,10 @@ import { UNDEFINED } from './meta';
 
 export function unwatchKey(obj, keyName, meta) {
   let m = meta || metaFor(obj);
+
+  // do nothing of this object has already been destroyed
+  if (m.isSourceDestroyed()) { return; }
+
   let count = m.peekWatching(keyName);
   if (count === 1) {
     m.writeWatching(keyName, 0);
